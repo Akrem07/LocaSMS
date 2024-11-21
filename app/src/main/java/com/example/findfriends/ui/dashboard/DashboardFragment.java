@@ -1,7 +1,5 @@
 package com.example.findfriends.ui.dashboard;
 
-
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -51,7 +49,7 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
     private LocationCallback locationCallback;
     private DatabaseHelper dbHelper;
     private Marker currentLocationMarker;
-    private Marker selectedMarker; // Track the currently selected marker
+    private Marker selectedMarker;
 
     @Nullable
     @Override
@@ -59,17 +57,31 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        // Retrieve latitude and longitude from the arguments (passed bundle)
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            double latitude = bundle.getDouble("latitude", 0.0);
+            double longitude = bundle.getDouble("longitude", 0.0);
+
+            // Add a marker on the map for the passed position
+            LatLng position = new LatLng(latitude, longitude);
+            if (mMap != null) {
+                mMap.addMarker(new MarkerOptions().position(position).title("Position"));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
+            }
+        }
+
         // Initialize FusedLocationProviderClient and DatabaseHelper
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         dbHelper = new DatabaseHelper(requireContext());
 
-        // Load the map
+        // Set up the map fragment
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
 
-        // Set up the location request
+        // Set up location request and callback
         createLocationRequest();
 
         return root;
@@ -143,18 +155,33 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void loadSavedPositions() {
-        Cursor cursor = dbHelper.getAllPositions();
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                double latitude = cursor.getDouble(cursor.getColumnIndex("latitude"));
-                double longitude = cursor.getDouble(cursor.getColumnIndex("longitude"));
-                String name = cursor.getString(cursor.getColumnIndex("name"));
+        // Load all named positions
+        Cursor namedCursor = dbHelper.getAllNamedPositions();
+        if (namedCursor != null) {
+            while (namedCursor.moveToNext()) {
+                double latitude = namedCursor.getDouble(namedCursor.getColumnIndex("latitude"));
+                double longitude = namedCursor.getDouble(namedCursor.getColumnIndex("longitude"));
+                String name = namedCursor.getString(namedCursor.getColumnIndex("name"));
 
                 LatLng savedLocation = new LatLng(latitude, longitude);
                 Marker marker = mMap.addMarker(new MarkerOptions().position(savedLocation).title(name));
-                marker.setTag(cursor.getInt(cursor.getColumnIndex("id")));  // Store position id in the marker tag
+                marker.setTag(namedCursor.getInt(namedCursor.getColumnIndex("id")));  // Store position id in the marker tag
             }
-            cursor.close();
+            namedCursor.close();
+        }
+
+        // Load last unnamed position
+        Cursor lastUnnamedCursor = dbHelper.getLastUnnamedPosition();
+        if (lastUnnamedCursor != null && lastUnnamedCursor.moveToFirst()) {
+            double latitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("latitude"));
+            double longitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("longitude"));
+
+            LatLng lastLocation = new LatLng(latitude, longitude);
+            Marker marker = mMap.addMarker(new MarkerOptions().position(lastLocation).title("Last Position"));
+            marker.setTag(lastUnnamedCursor.getInt(lastUnnamedCursor.getColumnIndex("id")));  // Store position id in the marker tag
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocation, 15)); // Center the map on the last position
+            lastUnnamedCursor.close();
         }
     }
 
@@ -164,7 +191,7 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Save Position")
-                .setMessage("Do you want to save this position?")
+                .setMessage("Enter a name for this position:")
                 .setView(editText)
                 .setPositiveButton("Save", (dialog, which) -> {
                     String positionName = editText.getText().toString().trim();
@@ -173,11 +200,12 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
                         boolean isInserted = dbHelper.insertPositionWithName(latLng.latitude, latLng.longitude, timestamp, positionName);
                         if (isInserted) {
                             Toast.makeText(requireContext(), "Position saved!", Toast.LENGTH_SHORT).show();
+                            mMap.addMarker(new MarkerOptions().position(latLng).title(positionName)); // Add marker to map
                         } else {
                             Toast.makeText(requireContext(), "Failed to save position!", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(requireContext(), "Please enter a name for the position", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Please enter a valid name for the position", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
@@ -198,52 +226,38 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
                     .setMessage("Name: " + positionName + "\nLatitude: " + latitude + "\nLongitude: " + longitude)
                     .setPositiveButton("Edit", (dialog, which) -> showEditPositionDialog(marker, positionId, positionName))
                     .setNegativeButton("Delete", (dialog, which) -> {
-                        boolean isDeleted = dbHelper.deletePosition(positionId);
+                        boolean isDeleted = dbHelper.deletePosition(String.valueOf(positionId));
                         if (isDeleted) {
-                            marker.remove();
-                            Toast.makeText(requireContext(), "Position deleted!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to delete position!", Toast.LENGTH_SHORT).show();
+                            marker.remove(); // Remove the marker from the map
+                            Toast.makeText(requireContext(), "Position deleted", Toast.LENGTH_SHORT).show();
                         }
                     })
-                    .setNeutralButton("Close", (dialog, which) -> dialog.dismiss())
                     .show();
-
-            cursor.close();
         }
     }
 
-    private void showEditPositionDialog(Marker marker, int positionId, String currentName) {
+    private void showEditPositionDialog(Marker marker, int positionId, String oldName) {
         EditText editText = new EditText(requireContext());
-        editText.setText(currentName);
+        editText.setText(oldName);
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Edit Position")
-                .setMessage("Edit the position name")
+                .setMessage("Edit the name of the position:")
                 .setView(editText)
                 .setPositiveButton("Save", (dialog, which) -> {
                     String newName = editText.getText().toString().trim();
-                    boolean isUpdated = dbHelper.updatePositionName(positionId, newName);
-                    if (isUpdated) {
-                        marker.setTitle(newName);
-                        Toast.makeText(requireContext(), "Position updated!", Toast.LENGTH_SHORT).show();
+                    if (!newName.isEmpty()) {
+                        boolean isUpdated = dbHelper.updatePositionName(positionId, newName);
+                        if (isUpdated) {
+                            marker.setTitle(newName); // Update the marker title
+                            Toast.makeText(requireContext(), "Position updated", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(requireContext(), "Failed to update position!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Please enter a valid name", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        startLocationUpdates();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        fusedLocationClient.removeLocationUpdates(locationCallback);
-    }
 }

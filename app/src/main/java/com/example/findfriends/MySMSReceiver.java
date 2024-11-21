@@ -1,6 +1,5 @@
 package com.example.findfriends;
 
-
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -14,6 +13,9 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+
+import com.example.findfriends.MapsActivity;
+import com.example.findfriends.MyLocationService;
 
 public class MySMSReceiver extends BroadcastReceiver {
 
@@ -65,7 +67,7 @@ public class MySMSReceiver extends BroadcastReceiver {
                         mynotif.setAutoCancel(true);
 
                         //he4i l'action
-                        Intent i2=new Intent(context,MapsActivity.class);
+                        Intent i2=new Intent(context, MapsActivity.class);
                         i2.putExtra("longitude",longitude);
                         i2.putExtra("latitude",latitude);
 

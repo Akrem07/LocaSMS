@@ -12,19 +12,20 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import com.example.findfriends.databinding.ActivityMapsBinding;
+import com.example.findfriends.databinding.FragmentDashboardBinding;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private ActivityMapsBinding binding;
+    private FragmentDashboardBinding binding;
     double longitude,latitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMapsBinding.inflate(getLayoutInflater());
+        binding = FragmentDashboardBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
 
