@@ -8,10 +8,14 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -39,6 +43,7 @@ import java.util.Locale;
 import com.example.findfriends.R;
 import com.example.findfriends.DatabaseHelper;
 import com.example.findfriends.databinding.FragmentDashboardBinding;
+import com.google.android.material.button.MaterialButton;
 
 public class DashboardFragment extends Fragment implements OnMapReadyCallback {
 
@@ -157,60 +162,115 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
     private void loadSavedPositions() {
         // Load all named positions
         Cursor namedCursor = dbHelper.getAllNamedPositions();
-        if (namedCursor != null) {
+        if (namedCursor != null && namedCursor.getCount() > 0) { // Check if namedCursor is not null and contains data
             while (namedCursor.moveToNext()) {
                 double latitude = namedCursor.getDouble(namedCursor.getColumnIndex("latitude"));
                 double longitude = namedCursor.getDouble(namedCursor.getColumnIndex("longitude"));
                 String name = namedCursor.getString(namedCursor.getColumnIndex("name"));
 
-                LatLng savedLocation = new LatLng(latitude, longitude);
-                Marker marker = mMap.addMarker(new MarkerOptions().position(savedLocation).title(name));
-                marker.setTag(namedCursor.getInt(namedCursor.getColumnIndex("id")));  // Store position id in the marker tag
+                // Check if the name is neither empty nor "null"
+                if (name != null && !name.trim().isEmpty() && !name.equalsIgnoreCase("null")) {
+                    LatLng savedLocation = new LatLng(latitude, longitude);
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(savedLocation).title(name));
+                    marker.setTag(namedCursor.getInt(namedCursor.getColumnIndex("id")));  // Store position id in the marker tag
+                }
             }
             namedCursor.close();
         }
 
-        // Load last unnamed position
-        Cursor lastUnnamedCursor = dbHelper.getLastUnnamedPosition();
-        if (lastUnnamedCursor != null && lastUnnamedCursor.moveToFirst()) {
-            double latitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("latitude"));
-            double longitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("longitude"));
-
-            LatLng lastLocation = new LatLng(latitude, longitude);
-            Marker marker = mMap.addMarker(new MarkerOptions().position(lastLocation).title("Last Position"));
-            marker.setTag(lastUnnamedCursor.getInt(lastUnnamedCursor.getColumnIndex("id")));  // Store position id in the marker tag
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocation, 15)); // Center the map on the last position
-            lastUnnamedCursor.close();
-        }
+//        // Load last unnamed position
+//        Cursor lastUnnamedCursor = dbHelper.getLastUnnamedPosition();
+//        if (lastUnnamedCursor != null && lastUnnamedCursor.getCount() > 0 && lastUnnamedCursor.moveToFirst()) { // Check if lastUnnamedCursor is not null and has data
+//            double latitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("latitude"));
+//            double longitude = lastUnnamedCursor.getDouble(lastUnnamedCursor.getColumnIndex("longitude"));
+//
+//            LatLng lastLocation = new LatLng(latitude, longitude);
+//            Marker marker = mMap.addMarker(new MarkerOptions().position(lastLocation).title("Last Position"));
+//            marker.setTag(lastUnnamedCursor.getInt(lastUnnamedCursor.getColumnIndex("id")));  // Store position id in the marker tag
+//
+//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocation, 15)); // Center the map on the last position
+//            lastUnnamedCursor.close();
+//        }
     }
+
+
 
     private void showSavePositionDialog(LatLng latLng) {
-        EditText editText = new EditText(requireContext());
-        editText.setHint("Enter position name");
+        // Inflate the custom layout for the dialog
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_name, null);  // Use dialog_edit_name.xml layout
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Save Position")
-                .setMessage("Enter a name for this position:")
-                .setView(editText)
-                .setPositiveButton("Save", (dialog, which) -> {
-                    String positionName = editText.getText().toString().trim();
-                    if (!positionName.isEmpty()) {
-                        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                        boolean isInserted = dbHelper.insertPositionWithName(latLng.latitude, latLng.longitude, timestamp, positionName);
-                        if (isInserted) {
-                            Toast.makeText(requireContext(), "Position saved!", Toast.LENGTH_SHORT).show();
-                            mMap.addMarker(new MarkerOptions().position(latLng).title(positionName)); // Add marker to map
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to save position!", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), "Please enter a valid name for the position", Toast.LENGTH_SHORT).show();
+        // Get references to the UI elements in the dialog layout
+        EditText etEditName = dialogView.findViewById(R.id.etEditName);  // Reference to the EditText for name input
+        MaterialButton btnSaveName = dialogView.findViewById(R.id.btnSaveName);  // Reference to the Save button
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancel);  // Reference to the Cancel button
+
+        // Create the AlertDialog and set its view to the custom layout
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setView(dialogView);
+
+        // Create the dialog instance
+        AlertDialog dialog = builder.create();
+
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_background);
+
+        // Set up the Cancel button
+        btnCancel.setOnClickListener(v -> {
+            dialog.dismiss(); // Close the dialog when Cancel is clicked
+        });
+
+        // Set up the Save button
+        btnSaveName.setOnClickListener(v -> {
+            String positionName = etEditName.getText().toString().trim();
+
+            // Check if the position name is not empty
+            if (!positionName.isEmpty()) {
+                try {
+                    // Get the current timestamp
+                    String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+
+                    // Log the values being passed
+                    Log.d("SavePosition", "Saving position: Name: " + positionName + ", Latitude: " + latLng.latitude + ", Longitude: " + latLng.longitude);
+
+                    // Check if dbHelper is null
+                    if (dbHelper == null) {
+                        Log.e("SavePosition", "Database helper is not initialized!");
+                        Toast.makeText(requireContext(), "Database helper not initialized!", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
+
+                    // Insert the position into the database
+                    boolean isInserted = dbHelper.insertPositionWithName(latLng.latitude, latLng.longitude, timestamp, positionName);
+
+                    if (isInserted) {
+                        Toast.makeText(requireContext(), "Position saved!", Toast.LENGTH_SHORT).show();
+                        mMap.addMarker(new MarkerOptions().position(latLng).title(positionName)); // Add marker to map
+                    } else {
+                        Toast.makeText(requireContext(), "Failed to save position!", Toast.LENGTH_SHORT).show();
+                    }
+
+                } catch (Exception e) {
+                    // Catch any exceptions and log them
+                    Log.e("SavePositionError", "Error while saving position: ", e);
+                    Toast.makeText(requireContext(), "An error occurred while saving the position.", Toast.LENGTH_SHORT).show();
+                }
+
+                // Dismiss the dialog after saving
+                dialog.dismiss();
+            } else {
+                Toast.makeText(requireContext(), "Please enter a valid name for the position", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Show the dialog
+        dialog.show();
     }
+
+
+
+
+
+
 
     private void showPositionDetailsDialog(Marker marker) {
         int positionId = (int) marker.getTag();
@@ -221,43 +281,96 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
             double latitude = cursor.getDouble(cursor.getColumnIndex("latitude"));
             double longitude = cursor.getDouble(cursor.getColumnIndex("longitude"));
 
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("Position Details")
-                    .setMessage("Name: " + positionName + "\nLatitude: " + latitude + "\nLongitude: " + longitude)
-                    .setPositiveButton("Edit", (dialog, which) -> showEditPositionDialog(marker, positionId, positionName))
-                    .setNegativeButton("Delete", (dialog, which) -> {
-                        boolean isDeleted = dbHelper.deletePosition(String.valueOf(positionId));
-                        if (isDeleted) {
-                            marker.remove(); // Remove the marker from the map
-                            Toast.makeText(requireContext(), "Position deleted", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .show();
+            // Inflate the dialog_position_details.xml layout
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            View dialogView = inflater.inflate(R.layout.dialog_position_details, null);
+
+            // Find views within the inflated layout
+            TextView tvPositionName = dialogView.findViewById(R.id.tvPositionName);
+            TextView tvPositionLatitude = dialogView.findViewById(R.id.tvPositionLatitude);
+            TextView tvPositionLongitude = dialogView.findViewById(R.id.tvPositionLongitude);
+            TextView btnClose = dialogView.findViewById(R.id.btnClose);
+            MaterialButton btnEdit = dialogView.findViewById(R.id.btnEdit);
+            MaterialButton btnDelete = dialogView.findViewById(R.id.btnDelete);
+
+            // Set data to views
+            tvPositionName.setText("Name: " + positionName);
+            tvPositionLatitude.setText("Latitude: " + latitude);
+            tvPositionLongitude.setText("Longitude: " + longitude);
+
+            // Build the dialog using the custom view
+            AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                    .setView(dialogView)
+                    .create();
+
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_background);
+
+            // Handle button clicks
+            btnEdit.setOnClickListener(v -> {
+                dialog.dismiss();
+                showEditPositionDialog(marker, positionId, positionName);
+            });
+
+            btnDelete.setOnClickListener(v -> {
+                boolean isDeleted = dbHelper.deletePosition(String.valueOf(positionId));
+                if (isDeleted) {
+                    marker.remove(); // Remove the marker from the map
+                    Toast.makeText(requireContext(), "Position deleted", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+            });
+
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+
+            dialog.show();
         }
     }
 
-    private void showEditPositionDialog(Marker marker, int positionId, String oldName) {
-        EditText editText = new EditText(requireContext());
-        editText.setText(oldName);
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Edit Position")
-                .setMessage("Edit the name of the position:")
-                .setView(editText)
-                .setPositiveButton("Save", (dialog, which) -> {
-                    String newName = editText.getText().toString().trim();
-                    if (!newName.isEmpty()) {
-                        boolean isUpdated = dbHelper.updatePositionName(positionId, newName);
-                        if (isUpdated) {
-                            marker.setTitle(newName); // Update the marker title
-                            Toast.makeText(requireContext(), "Position updated", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), "Please enter a valid name", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
+
+
+    private void showEditPositionDialog(Marker marker, int positionId, String oldName) {
+        // Inflate the dialog_edit_position.xml layout
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View dialogView = inflater.inflate(R.layout.dialog_edit_position, null);
+
+        // Find views within the inflated layout
+        EditText editText = dialogView.findViewById(R.id.editPositionName);
+        editText.setText(oldName);
+        ImageButton btnClose = dialogView.findViewById(R.id.btnClose);
+        MaterialButton btnSaveName = dialogView.findViewById(R.id.btnSaveName);
+
+
+        // Build the dialog using the custom view
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        // Apply the custom rounded background
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.rounded_dialog_background);
+
+        // Handle button clicks
+        btnSaveName.setOnClickListener(v -> {
+            String newName = editText.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                boolean isUpdated = dbHelper.updatePositionName(positionId, newName);
+                if (isUpdated) {
+                    marker.setTitle(newName); // Update the marker title
+                    Toast.makeText(requireContext(), "Position updated", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+            } else {
+                Toast.makeText(requireContext(), "Please enter a valid name", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
+
+
 
 }

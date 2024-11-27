@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="st_titre1">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/gray_900</item>
+        <item name="android:textSize">48sp</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+
+    <style name="Theme.TransparentSplash" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Make background transparent -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+
+        <!-- Make status bar transparent -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+
+</resources>

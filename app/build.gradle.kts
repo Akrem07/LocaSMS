@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     implementation(libs.support.annotations)
+    implementation(libs.material)
+    implementation(libs.activity)
 
     // Testing
     testImplementation(libs.junit)

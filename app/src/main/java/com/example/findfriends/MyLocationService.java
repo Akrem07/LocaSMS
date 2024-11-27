@@ -13,12 +13,12 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MyLocationService extends Service {
 
-    private DatabaseHelper databaseHelper; // Add a DatabaseHelper instance
+    private DatabaseHelper databaseHelper;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        databaseHelper = new DatabaseHelper(this); // Initialize DatabaseHelper
+        databaseHelper = new DatabaseHelper(this);
     }
 
     @SuppressLint("MissingPermission")
@@ -26,6 +26,8 @@ public class MyLocationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         String phoneNumber = intent.getStringExtra("phone");
+        String name = intent.getStringExtra("name");
+
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
 
         client.getLastLocation().addOnSuccessListener(location -> {
@@ -34,15 +36,17 @@ public class MyLocationService extends Service {
                 double latitude = location.getLatitude();
 
                 // Save position and phone number in the database
-                databaseHelper.savePosition(phoneNumber, latitude, longitude, String.valueOf(System.currentTimeMillis()));
+                databaseHelper.savePosition(phoneNumber, latitude, longitude, String.valueOf(System.currentTimeMillis()), name);
 
-                // Send SMS with the location
+                // Send SMS with the location and name (Don't repeat the name, just include it once)
                 SmsManager manager = SmsManager.getDefault();
-                manager.sendTextMessage(phoneNumber,
+                manager.sendTextMessage(
+                        phoneNumber,
                         null,
-                        "FindFriends: Ma position est #" + longitude + "#" + latitude,
+                        "FindFriends: Ma position est #" + longitude + "#" + latitude + "#" + name, // Send only the location and name once
                         null,
-                        null);
+                        null
+                );
             }
         });
 

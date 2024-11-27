@@ -117,11 +117,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(COLUMN_LATITUDE, latitude);
         values.put(COLUMN_LONGITUDE, longitude);
-        values.put(COLUMN_TIMESTAMP, timestamp);
+        values.put(COLUMN_TIMESTAMP, timestamp);  // You can set the current time or pass a timestamp if needed
         values.put(COLUMN_NAME, name);  // Insert name
         long result = db.insert(TABLE_NAME, null, values);
         return result != -1;  // Return true if insertion is successful
     }
+
+
 
     // Insert position without name
     public boolean insertPosition(double latitude, double longitude, String timestamp) {
@@ -147,11 +149,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 //    }
 
     // Update position name
+//    public boolean updatePositionName(int id, String newName) {
+//        SQLiteDatabase db = this.getWritableDatabase();
+//        ContentValues values = new ContentValues();
+//        values.put(COLUMN_NAME, newName);
+//        int rowsAffected = db.update(TABLE_NAME, values, "id = ?", new String[]{String.valueOf(id)});
+//        return rowsAffected > 0;
+//    }
+
     public boolean updatePositionName(int id, String newName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME, newName);
-        int rowsAffected = db.update(TABLE_NAME, values, "id = ?", new String[]{String.valueOf(id)});
+        values.put("name", newName);
+        int rowsAffected = db.update("positions", values, "id=?", new String[]{String.valueOf(id)});
         return rowsAffected > 0;
     }
 
@@ -209,7 +219,47 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 
 
+    public String getNameByPhone(String phone) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_NAME, new String[]{COLUMN_NAME}, COLUMN_PHONE + " = ?", new String[]{phone}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
+            cursor.close();
+            return name;
+        }
+        if (cursor != null) cursor.close();
+        return null;
+    }
 
+
+
+
+    public boolean savePosition(String phone, double latitude, double longitude, String timestamp, String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        // Populate ContentValues with provided data
+        values.put(COLUMN_LATITUDE, latitude);
+        values.put(COLUMN_LONGITUDE, longitude);
+        values.put(COLUMN_TIMESTAMP, timestamp);
+        values.put(COLUMN_PHONE, phone);
+        values.put(COLUMN_NAME, name); // Add name
+
+        // Check if an entry already exists for the given phone number
+        Cursor cursor = db.query(TABLE_NAME, null, COLUMN_PHONE + " = ?", new String[]{phone}, null, null, null);
+
+        if (cursor != null && cursor.getCount() > 0) {
+            // Update existing entry
+            int rowsAffected = db.update(TABLE_NAME, values, COLUMN_PHONE + " = ?", new String[]{phone});
+            cursor.close(); // Close the cursor to release resources
+            return rowsAffected > 0; // Return true if update was successful
+        } else {
+            // Insert a new entry
+            long result = db.insert(TABLE_NAME, null, values);
+            if (cursor != null) cursor.close(); // Close the cursor if not null
+            return result != -1; // Return true if insert was successful
+        }
+    }
 
 
 

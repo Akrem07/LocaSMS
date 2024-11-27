@@ -5,77 +5,62 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="24dp"
+    android:background="#FFFFFF"
     tools:context=".ui.home.HomeFragment">
 
-    <!-- Title Text -->
     <TextView
         android:id="@+id/text_home"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Search friend position"
-        android:textSize="20sp"
+        android:text="Search Friend Position"
+        android:textSize="22sp"
         android:textStyle="bold"
-        android:textColor="#333333"
-        android:layout_marginBottom="16dp"
+        android:textColor="#4F4F4F"
+        android:layout_marginBottom="24dp"
         android:gravity="center"/>
 
-    <!-- EditText for Name -->
     <EditText
         android:id="@+id/edname"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter friend's name"
-        android:textSize="24sp"
+        android:textSize="16sp"
         android:inputType="text"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="#4F4F4F"
         android:backgroundTint="#E0E0E0"
-        android:textColor="#333333"
-        android:padding="12dp"
-        android:layout_gravity="center"/>
+        android:padding="14dp"
+        android:layout_gravity="center"
+        android:drawableLeft="@android:drawable/ic_menu_search"
+        android:drawablePadding="10dp"/>
 
-    <!-- EditText for Phone Number -->
     <EditText
         android:id="@+id/ednumero"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter a phone number"
-        android:textSize="24sp"
+        android:textSize="16sp"
         android:inputType="phone"
         android:layout_marginBottom="24dp"
+        android:textColor="#4F4F4F"
         android:backgroundTint="#E0E0E0"
-        android:textColor="#333333"
-        android:padding="12dp"
-        android:layout_gravity="center"/>
+        android:padding="14dp"
+        android:layout_gravity="center"
+        android:drawableLeft="@android:drawable/ic_menu_call"
+        android:drawablePadding="10dp"/>
 
-    <!-- Material CardView for Button -->
-    <com.google.android.material.card.MaterialCardView
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnsendsms"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="4dp"
-        android:backgroundTint="@android:color/white">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:padding="16dp">
-
-            <!-- Send SMS Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnsendsms"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Send SMS"
-                android:textColor="@android:color/white"
-                app:cornerRadius="24dp"
-                app:backgroundTint="@android:color/holo_blue_light"
-                android:layout_marginEnd="8dp"/>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:text="Send SMS"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#25D366"
+        app:cornerRadius="24dp"
+        app:icon="@android:drawable/ic_menu_send"
+        app:iconGravity="start"
+        app:iconPadding="8dp" />
 
 </LinearLayout>

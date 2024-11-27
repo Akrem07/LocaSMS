@@ -15,7 +15,9 @@
 
     <!-- Alphas for Black -->
     <color name="blackAlpha_50">#0A000000</color>
-    <color name="blackAlpha_100">#0F000000</color>
+
+        <color name="blackAlpha_100">#0F000000</color>
+
     <color name="blackAlpha_200">#14000000</color>
     <color name="blackAlpha_300">#29000000</color>
     <color name="blackAlpha_400">#3D000000</color>
@@ -156,4 +158,35 @@
     <color name="pink_700">#97266D</color>
     <color name="pink_800">#702459</color>
     <color name="pink_900">#521B41</color>
+
+
+
+        <!-- Text Colors -->
+        <color name="primary_text">#333333</color>
+
+        <!-- Background Colors -->
+        <color name="input_background">#E0E0E0</color>
+
+        <!-- Button Colors -->
+        <color name="button_send_sms">#3F51B5</color>
+
+
+    <color name="secondary_text">#555555</color> <!-- Lighter gray text for phone number -->
+    <color name="tertiary_text">#777777</color> <!-- Even lighter gray text for location -->
+    <color name="quaternary_text">#B0B0B0</color> <!-- Very light gray text for timestamp -->
+
+    <!-- Button Colors -->
+    <color name="button_delete">#F44336</color> <!-- Red color for delete button -->
+    <color name="button_map">#2196F3</color> <!-- Blue color for map button -->
+    <color name="button_edit">#4CAF50</color>
+
+    <color name="splash_background">#051d40</color>
+        <color name="placeholder_color">#D3D3D3</color> <!-- Light gray -->
+        <color name="cancel_button_color">#FF0000</color> <!-- Red -->
+        <color name="save_button_color">#00FF00</color> <!-- Green -->
+        <color name="close_button_color">#0000FF</color> <!-- Blue -->
+        <color name="delete_button_color">#FF4500</color> <!-- Orange Red -->
+        <color name="edit_button_color">#FFD700</color> <!-- Gold -->
+
+
 </resources>

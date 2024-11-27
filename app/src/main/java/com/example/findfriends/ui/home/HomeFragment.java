@@ -1,5 +1,6 @@
 package com.example.findfriends.ui.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.view.LayoutInflater;
@@ -9,8 +10,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
+import com.example.findfriends.MyLocationService;
 import com.example.findfriends.databinding.FragmentHomeBinding;
 
 public class HomeFragment extends Fragment {
@@ -19,30 +20,36 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-//        HomeViewModel homeViewModel =
-//                new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // action 3al button
+        // Action when button is clicked
         binding.btnsendsms.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String numero=binding.ednumero.getText().toString();
-                SmsManager manager=SmsManager.getDefault();
-                manager.sendTextMessage(numero,
+                String numero = binding.ednumero.getText().toString().trim();
+                String name = binding.edname.getText().toString().trim();
+
+                // Send SMS with name
+                SmsManager manager = SmsManager.getDefault();
+                manager.sendTextMessage(
+                        numero,
                         null,
-                        "FindFriends: envoyer moi votre position",
+                        "FindFriends: envoyer moi votre position - " + name,  // Include name in the message
                         null,
                         null
                 );
+
+                // Start service with the phone number and name
+                Intent serviceIntent = new Intent(getContext(), MyLocationService.class);
+                serviceIntent.putExtra("phone", numero);
+                serviceIntent.putExtra("name", name);  // Pass the name to the service
+                getActivity().startService(serviceIntent);  // Start the service
             }
         });
 
-
         final TextView textView = binding.textHome;
-//        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

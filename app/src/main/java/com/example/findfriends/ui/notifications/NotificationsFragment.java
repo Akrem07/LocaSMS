@@ -57,8 +57,8 @@ public class NotificationsFragment extends Fragment {
                     String timestamp = cursor.getString(cursor.getColumnIndexOrThrow("timestamp"));
                     String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
 
-                    // Only add the position if the phone is not null or empty
-                    if (phone != null && !phone.isEmpty()) {
+                    // Only add the position if the phone and name are not null, empty, or "null"
+                    if (phone != null && !phone.isEmpty() && name != null && !name.isEmpty() && !name.equals("null")) {
                         positions.add(new Position(id, latitude, longitude, timestamp, name, phone));
                     }
 
@@ -73,5 +73,7 @@ public class NotificationsFragment extends Fragment {
         }
         return positions;
     }
+
+
 
 }

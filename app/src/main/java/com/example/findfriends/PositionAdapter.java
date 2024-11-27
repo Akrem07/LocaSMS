@@ -43,20 +43,23 @@ public class PositionAdapter extends RecyclerView.Adapter<PositionAdapter.Positi
     public void onBindViewHolder(@NonNull PositionViewHolder holder, int position) {
         Position current = positions.get(position);
 
-        holder.tvName.setText(current.getName() != null && !current.getName().isEmpty()
-                ? "Name: " + current.getName()
-                : "Name: Unknown");
+        // Fetch the name associated with the phone number from the database
+        String realName = databaseHelper.getNameByPhone(current.getPhone());
+        if (realName != null && !realName.isEmpty()) {
+            holder.tvName.setText("Name: " + realName);
+            current.setName(realName); // Update the name in the current position object
+        } else {
+            holder.tvName.setText("Name: Unknown");
+        }
+
         holder.tvPhone.setText("Phone: " + current.getPhone());
         holder.tvLocation.setText("Location: " + current.getLatitude() + ", " + current.getLongitude());
         holder.tvTimestamp.setText("Timestamp: " + current.getTimestamp());
 
         // Delete Button Click
-        // Delete Button Click
         holder.btnDelete.setOnClickListener(v -> {
-            String positionId = String.valueOf(current.getId());  // Use the ID instead of phone
-            Log.d("Delete", "Attempting to delete position with ID: " + positionId);
-
-            boolean isDeleted = databaseHelper.deletePosition(positionId);  // Pass the ID to deletePosition
+            String positionId = String.valueOf(current.getId());
+            boolean isDeleted = databaseHelper.deletePosition(positionId);
             if (isDeleted) {
                 positions.remove(position);
                 notifyItemRemoved(position);
@@ -67,17 +70,12 @@ public class PositionAdapter extends RecyclerView.Adapter<PositionAdapter.Positi
             }
         });
 
-
         // View on Map Button Click
-        // Inside PositionAdapter - onBindViewHolder
-
         holder.btnViewOnMap.setOnClickListener(v -> {
-            // Pass the latitude and longitude to the DashboardFragment
             Position currentPosition = positions.get(position);
             double latitude = currentPosition.getLatitude();
             double longitude = currentPosition.getLongitude();
 
-            // Create a new instance of DashboardFragment
             Bundle bundle = new Bundle();
             bundle.putDouble("latitude", latitude);
             bundle.putDouble("longitude", longitude);
@@ -85,24 +83,20 @@ public class PositionAdapter extends RecyclerView.Adapter<PositionAdapter.Positi
             DashboardFragment dashboardFragment = new DashboardFragment();
             dashboardFragment.setArguments(bundle);
 
-            // Check if the context is an AppCompatActivity, and then replace the fragment
             if (context instanceof AppCompatActivity) {
                 AppCompatActivity activity = (AppCompatActivity) context;
                 activity.getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, dashboardFragment)  // Ensure the container ID is correct
-                        .addToBackStack(null)  // Add to back stack for navigation
+                        .replace(R.id.fragment_container, dashboardFragment)
+                        .addToBackStack(null)
                         .commit();
             }
         });
 
-
-
         // Edit Button Click
-        holder.btnEdit.setOnClickListener(v -> {
-            // Show a dialog to edit the name
-            showEditNameDialog(current, position);
-        });
+        holder.btnEdit.setOnClickListener(v -> showEditNameDialog(current, position));
     }
+
+
 
     private void showEditNameDialog(Position current, int position) {
         // Create a Dialog
