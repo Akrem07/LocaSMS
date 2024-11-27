@@ -12,42 +12,43 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MyLocationService extends Service {
-    public MyLocationService() {
-    }
+
+    private DatabaseHelper databaseHelper;
 
     @Override
-    public void onCreate(){
+    public void onCreate() {
         super.onCreate();
+        databaseHelper = new DatabaseHelper(this);
     }
 
     @SuppressLint("MissingPermission")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        String numero=intent.getStringExtra("phone");
+        String phoneNumber = intent.getStringExtra("phone");
+        String name = intent.getStringExtra("name");
 
-        FusedLocationProviderClient mclient=
-                LocationServices.getFusedLocationProviderClient(this);
+        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
 
-        mclient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null){
-                    double longitude=location.getLongitude();
-                    double latitude = location.getLatitude();
+        client.getLastLocation().addOnSuccessListener(location -> {
+            if (location != null) {
+                double longitude = location.getLongitude();
+                double latitude = location.getLatitude();
 
-                    SmsManager manager=SmsManager.getDefault();
-                    manager.sendTextMessage(numero,
-                            null,
-                            "FindFriends: Ma position est #"+longitude+"#"+latitude,
-                            null,
-                            null);
-                }
+                // Save position and phone number in the database
+                databaseHelper.savePosition(phoneNumber, latitude, longitude, String.valueOf(System.currentTimeMillis()), name);
 
-
+                // Send SMS with the location and name (Don't repeat the name, just include it once)
+                SmsManager manager = SmsManager.getDefault();
+                manager.sendTextMessage(
+                        phoneNumber,
+                        null,
+                        "FindFriends: Ma position est #" + longitude + "#" + latitude + "#" + name, // Send only the location and name once
+                        null,
+                        null
+                );
             }
         });
-
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -59,7 +60,6 @@ public class MyLocationService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

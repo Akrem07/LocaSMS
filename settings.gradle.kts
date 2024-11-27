@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FindFriends"
+rootProject.name = "LocaSMS"
 include(":app")
  

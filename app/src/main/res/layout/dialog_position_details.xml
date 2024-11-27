@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:padding="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    android:backgroundTint="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Close Button (X) -->
+        <TextView
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="✖"
+            android:textSize="20sp"
+            android:textColor="#888888"
+            android:contentDescription="Close"
+            android:padding="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <!-- Position Name Label -->
+        <TextView
+            android:id="@+id/tvPositionName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Position Name"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#212121" />
+
+        <!-- Latitude Label -->
+        <TextView
+            android:id="@+id/tvPositionLatitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Latitude:"
+            android:textSize="14sp"
+            android:textColor="#616161" />
+
+        <!-- Longitude Label -->
+        <TextView
+            android:id="@+id/tvPositionLongitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            android:text="Longitude:"
+            android:textSize="14sp"
+            android:textColor="#616161" />
+
+        <!-- Buttons Section (at the bottom) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:paddingTop="16dp">
+
+            <!-- Cancel Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Delete"
+                android:textColor="@android:color/white"
+                app:cornerRadius="20dp"
+                app:backgroundTint="@color/button_delete"
+                android:textSize="16sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp" />
+
+            <!-- Save Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Edit"
+                android:textColor="@android:color/white"
+                app:cornerRadius="20dp"
+                app:backgroundTint="@color/button_map"
+                android:textSize="16sp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

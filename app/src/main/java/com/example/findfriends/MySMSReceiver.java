@@ -1,6 +1,5 @@
 package com.example.findfriends;
 
-
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,80 +14,73 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.example.findfriends.MapsActivity;
+import com.example.findfriends.MyLocationService;
+
 public class MySMSReceiver extends BroadcastReceiver {
 
     @SuppressLint("MissingPermission")
     @Override
     public void onReceive(Context context, Intent intent) {
-        // TODO: This method is called when the BroadcastReceiver is receiving
-        // an Intent broadcast.
-//        throw new UnsupportedOperationException("Not yet implemented");
+        String messageBody, phoneNumber;
 
-        // Intent broadcast.
-        String messageBody,phoneNumber;
-        if(intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED"))
-        {
-            Bundle bundle =intent.getExtras();
+        if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
+            Bundle bundle = intent.getExtras();
             if (bundle != null) {
                 Object[] pdus = (Object[]) bundle.get("pdus");
                 final SmsMessage[] messages = new SmsMessage[pdus.length];
                 for (int i = 0; i < pdus.length; i++) {
                     messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
                 }
-                if (messages.length > -1) {
+
+                if (messages.length > 0) {
                     messageBody = messages[0].getMessageBody();
                     phoneNumber = messages[0].getDisplayOriginatingAddress();
 
                     Toast.makeText(context,
-                                    "Message : "+messageBody+"Reçu de la part de;"+ phoneNumber,
-                                    Toast.LENGTH_LONG )
-                            .show();
-                    if (messageBody.contains("FindFriends: envoyer moi votre position"))
-                    {
-                        //lancer un service => captter la position gps et la renvoyer
-                        Intent i=new Intent(context, MyLocationService.class);
-                        i.putExtra("phone",phoneNumber);
-                        context.startService(i);
+                            "Message : " + messageBody + " Reçu de la part de: " + phoneNumber,
+                            Toast.LENGTH_LONG).show();
+
+                    if (messageBody.contains("FindFriends: envoyer moi votre position")) {
+                        // Start service to get location and send it back
+                        Intent serviceIntent = new Intent(context, MyLocationService.class);
+                        serviceIntent.putExtra("phone", phoneNumber);
+
+                        // Use a static name (replace "YourName" with the name you prefer)
+//                        String name = "YourName"; // Static name used here
+//                        serviceIntent.putExtra("name", name);  // Pass the name as a static value
+                        context.startService(serviceIntent);
                     }
 
-                    if (messageBody.contains("FindFriends: Ma position est "))
-                    {
-                        String []t=messageBody.split("#");
-                        String longitude=t[1];
-                        String latitude=t[2];
-                        System.out.println(longitude+"---"+latitude);
+                    if (messageBody.contains("FindFriends: Ma position est ")) {
+                        String[] t = messageBody.split("#");
+                        if (t.length == 4) {
+                            String longitude = t[1];
+                            String latitude = t[2];
+                            String name = t[3]; // Extract name (can still be passed from the message)
 
-                        NotificationCompat.Builder mynotif=new NotificationCompat.Builder(context,"channel");
-                        mynotif.setContentTitle("Position recu");
-                        mynotif.setContentText("appuiyer pour voir sur map");
-                        mynotif.setSmallIcon(android.R.drawable.ic_dialog_map);
-                        mynotif.setAutoCancel(true);
+                            DatabaseHelper dbHelper = new DatabaseHelper(context);
+                            dbHelper.savePosition(phoneNumber, Double.parseDouble(latitude), Double.parseDouble(longitude), String.valueOf(System.currentTimeMillis()), name);
 
-                        //he4i l'action
-                        Intent i2=new Intent(context,MapsActivity.class);
-                        i2.putExtra("longitude",longitude);
-                        i2.putExtra("latitude",latitude);
+                            // Add a notification to alert the user
+                            NotificationCompat.Builder myNotif = new NotificationCompat.Builder(context, "channel")
+                                    .setContentTitle("Position reçue")
+                                    .setContentText("Appuyez pour voir sur la carte")
+                                    .setSmallIcon(android.R.drawable.ic_dialog_map)
+                                    .setAutoCancel(true);
 
-                        PendingIntent pi=PendingIntent.getActivity(context,
-                                0,
-                                i2,
-                                PendingIntent.FLAG_MUTABLE);
+                            Intent i2 = new Intent(context, MapsActivity.class);
+                            i2.putExtra("longitude", longitude);
+                            i2.putExtra("latitude", latitude);
+                            PendingIntent pi = PendingIntent.getActivity(context, 0, i2, PendingIntent.FLAG_MUTABLE);
+                            myNotif.setContentIntent(pi);
 
-                        mynotif.setContentIntent(pi);
-
-
-                        NotificationManagerCompat managerCompat= NotificationManagerCompat.from((context));
-                        //Creation d'une chaine
-
-                        NotificationChannel canal = new NotificationChannel("channel",
-                                "canal pour notre app",
-                                NotificationManager.IMPORTANCE_DEFAULT);
-                        managerCompat.createNotificationChannel(canal);
-
-                        managerCompat.notify(1,mynotif.build());
-
+                            NotificationManagerCompat managerCompat = NotificationManagerCompat.from(context);
+                            NotificationChannel canal = new NotificationChannel("channel", "Canal pour notre app", NotificationManager.IMPORTANCE_DEFAULT);
+                            managerCompat.createNotificationChannel(canal);
+                            managerCompat.notify(1, myNotif.build());
+                        }
                     }
-
                 }
             }
         }

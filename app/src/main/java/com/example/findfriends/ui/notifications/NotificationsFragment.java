@@ -1,37 +1,79 @@
 package com.example.findfriends.ui.notifications;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.findfriends.databinding.FragmentNotificationsBinding;
+import com.example.findfriends.DatabaseHelper;
+import com.example.findfriends.Position;
+import com.example.findfriends.PositionAdapter;
+import com.example.findfriends.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationsFragment extends Fragment {
 
-    private FragmentNotificationsBinding binding;
+    private RecyclerView recyclerView;
+    private PositionAdapter adapter;
+    private DatabaseHelper databaseHelper;
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-//        NotificationsViewModel notificationsViewModel =
-//                new ViewModelProvider(this).get(NotificationsViewModel.class);
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_notifications, container, false);
+        recyclerView = root.findViewById(R.id.recyclerViewFriends);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        binding = FragmentNotificationsBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        databaseHelper = new DatabaseHelper(getContext());
+        List<Position> positions = getPositionsFromDatabase();
 
-        final TextView textView = binding.textNotifications;
-//        notificationsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        adapter = new PositionAdapter(getContext(), positions);
+        recyclerView.setAdapter(adapter);
+
         return root;
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
+    private List<Position> getPositionsFromDatabase() {
+        List<Position> positions = new ArrayList<>();
+        Cursor cursor = null;
+
+        try {
+            cursor = databaseHelper.getAllPositions();
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    // Get values from the cursor
+                    int id = cursor.getInt(cursor.getColumnIndexOrThrow("id")); // Get id from database
+                    String phone = cursor.getString(cursor.getColumnIndexOrThrow("phone"));
+                    double latitude = cursor.getDouble(cursor.getColumnIndexOrThrow("latitude"));
+                    double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow("longitude"));
+                    String timestamp = cursor.getString(cursor.getColumnIndexOrThrow("timestamp"));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+
+                    // Only add the position if the phone and name are not null, empty, or "null"
+                    if (phone != null && !phone.isEmpty() && name != null && !name.isEmpty() && !name.equals("null")) {
+                        positions.add(new Position(id, latitude, longitude, timestamp, name, phone));
+                    }
+
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // Handle exceptions gracefully
+        } finally {
+            if (cursor != null) {
+                cursor.close(); // Close the cursor in the finally block
+            }
+        }
+        return positions;
     }
+
+
+
 }

@@ -1,6 +1,5 @@
 package com.example.findfriends;
 
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -29,8 +28,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
                 .build();
@@ -38,11 +35,10 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-
-        //demande permission
+        // Request permissions for SMS and Location
         ActivityCompat.requestPermissions(this,
-                //lezem manifest taa android
-                new String[]{Manifest.permission.SEND_SMS,
+                new String[]{
+                        Manifest.permission.SEND_SMS,
                         Manifest.permission.READ_SMS,
                         Manifest.permission.RECEIVE_SMS,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -51,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
                 },
                 1
         );
-
     }
 
     @Override
@@ -59,16 +54,14 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode==1){
-            if (grantResults.length>0){
-                if (grantResults[0]== PackageManager.PERMISSION_DENIED || grantResults[3]==PackageManager.PERMISSION_DENIED){
+        if (requestCode == 1) {
+            if (grantResults.length > 0) {
+                if (grantResults[0] == PackageManager.PERMISSION_DENIED || grantResults[3] == PackageManager.PERMISSION_DENIED) {
                     finish();
                 }
+            } else {
+                finish();
             }
-            else finish();
         }
     }
-
-
-
 }
